@@ -1,20 +1,19 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from sqlalchemy import create_engine, Column, Integer, String, DateTime
-from sqlalchemy.orm import sessionmaker
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.declarative import declarative_base
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
 from datetime import datetime
 import uvicorn
 import uuid
 
-from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title='WebSocket Example')
+app = FastAPI(title='WebSocket')
 
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    # Replace with your frontend's URL
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
@@ -46,7 +45,6 @@ class UserNotifications(BaseModel):
 
 
 active_connections = {}
-permanent_booking_info = []  # A list to store permanent booking info
 
 
 @app.websocket("/ws")
@@ -73,9 +71,6 @@ async def book_service(message: str):
     db_notification = Notification(message=message)
     db.add(db_notification)
     db.commit()
-
-    # Store the booking information in the permanent list
-    permanent_booking_info.append(message)
 
     # Broadcast the notification to all connected clients
     for connection in active_connections.values():
